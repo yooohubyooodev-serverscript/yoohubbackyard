@@ -1,0 +1,139 @@
+Lua Virtual Machine Decoding – Analysis and Examples
+
+1. Understanding the Decoding Process
+
+The Lua script appears to use a custom Virtual Machine (VM) to process encoded instructions instead of executing ordinary Lua code directly.
+
+The decoding process can be studied through several components.
+
+2. Varint Decoding
+
+Varint (Variable-Length Integer) encoding stores integers using one or more bytes.
+
+Example Input
+
+local bytes = {172, 2}
+
+Example Decoder
+
+local function decode_varint(bytes, pos)
+    local result = 0
+    local shift = 0
+
+    while true do
+        local b = bytes[pos]
+        pos = pos + 1
+
+        result = result + (b % 128) * (128 ^ shift)
+
+        if b < 128 then
+            return result, pos
+        end
+
+        shift = shift + 1
+    end
+end
+
+local value, next_pos = decode_varint(bytes, 1)
+
+print(value)    -- 300
+print(next_pos) -- 3
+
+This example demonstrates how multiple bytes can represent a single integer.
+
+3. Opcode Dispatching
+
+An opcode dispatcher determines which operation should be executed.
+
+Example
+
+local registers = {}
+
+local function execute(opcode, a, b, c)
+    if opcode == 1 then
+        registers[a] = b + c
+
+    elseif opcode == 2 then
+        registers[a] = b * c
+
+    elseif opcode == 3 then
+        registers[a] = b
+    end
+end
+
+execute(1, 1, 10, 20)
+
+print(registers[1]) -- 30
+
+Each opcode represents a different operation.
+
+4. Virtual Register Operations
+
+A Virtual Machine can use a register table to store intermediate values.
+
+Example
+
+local J = {}
+
+J[1] = 10
+J[2] = 20
+
+J[3] = J[1] + J[2]
+
+print(J[3]) -- 30
+
+The table "J" represents a simplified virtual register system.
+
+5. Buffer and Bitwise Operations
+
+The analyzed script contains references to binary processing functions, including:
+
+- "buffer.fromstring"
+- "buffer.readu8"
+- "buffer.readu32"
+- "buffer.writeu8"
+- "bit32.bxor"
+- "bit32.band"
+- "bit32.bor"
+- "bit32.rshift"
+
+These functions are associated with reading, writing, and manipulating binary data.
+
+6. Overall Decoding Architecture
+
+Encoded Data
+     |
+     v
+Buffer Reader
+     |
+     v
+Varint Decoder
+     |
+     v
+Instruction Data
+     |
+     v
+Opcode Dispatcher
+     |
+     v
+Virtual Registers
+     |
+     v
+VM Execution
+
+7. Recommended Analysis Order
+
+1. Identify the Buffer Reader.
+2. Understand the Varint Decoder.
+3. Analyze the Bitwise Operations.
+4. Examine the Opcode Dispatcher.
+5. Understand the Virtual Registers.
+6. Reconstruct the VM Execution Flow.
+
+8. Conclusion
+
+The analyzed Lua script contains structures consistent with a custom Virtual Machine and bytecode interpreter.
+
+The recommended approach is to study the binary reader and Varint decoding first, then examine the opcode dispatcher and virtual registers.
+
+Important: These code examples are simplified educational demonstrations. They are not extracted implementations of the original script. The exact decoding algorithm, opcode meanings, and complete bytecode format have not yet been verified.
